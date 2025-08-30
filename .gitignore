@@ -205,3 +205,21 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+
+### mitodemon specific files ###
+
+sc_mito_vars/**
+!sc_mito_vars/**/
+model/**
+!model/**/
+notebooks/**
+!notebooks/Data_Simulation_Homogeneous_Cell_Population.ipynb
+!notebooks/Deconvolution_Homogenous_Cell_by_Regularized_Linear_Regression.ipynb
+!notebooks/iMiGseq_VAULT_snp_vcf_output_standardization.ipynb
+
+
+
+
+
