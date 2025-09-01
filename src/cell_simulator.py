@@ -77,9 +77,11 @@ class CellSimulator:
     def add_noise(self,
                   cell_proportions: np.ndarray,
                   cluster_signatures: np.ndarray,
-                  noise_level: float = 0.01) -> np.ndarray:
+                  noise_level: float = 0.01,
+                  poisson_lambda: float = 10.0,
+                  umi_bias_rate: float = 0.1) -> np.ndarray:
         """
-        Add noise to create observed data
+        Add realistic noise including Poisson for read counts and UMI biases
         
         Parameters:
         -----------
@@ -89,6 +91,10 @@ class CellSimulator:
             Cluster signatures (n_positions x n_clusters)
         noise_level : float
             Standard deviation of Gaussian noise
+        poisson_lambda : float
+            Lambda for Poisson noise on read counts (new)
+        umi_bias_rate : float
+            Rate of UMI-specific bias/dropout (new)
         
         Returns:
         --------
@@ -98,9 +104,18 @@ class CellSimulator:
         # Matrix multiplication: (n_cells x n_clusters) @ (n_clusters x n_positions)
         C_true = cell_proportions @ cluster_signatures.T
         
+        # Add Poisson noise for read counts (new: model count variability)
+        poisson_noise = np.random.poisson(poisson_lambda, size=C_true.shape) / poisson_lambda
+        C_with_poisson = C_true * poisson_noise
+        
+        # Add UMI bias/dropout (new: simulate UMI-specific effects)
+        umi_bias = np.random.uniform(1 - umi_bias_rate, 1 + umi_bias_rate, size=C_true.shape[1])
+        umi_bias = np.tile(umi_bias, (C_true.shape[0], 1))
+        C_with_bias = C_with_poisson * umi_bias
+        
         # Add Gaussian noise
-        noise = np.random.normal(0, noise_level, size=C_true.shape)
-        C_observed = C_true + noise
+        gaussian_noise = np.random.normal(0, noise_level, size=C_true.shape)
+        C_observed = C_with_bias + gaussian_noise
         
         # Clip to [0, 1] range
         C_observed = np.clip(C_observed, 0, 1)
